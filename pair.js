@@ -69,11 +69,11 @@ const config = {
   ],
   
   OTP_EXPIRY: 300000,
-  OWNER_NUMBER: process.env.OWNER_NUMBER || '263714757857',
+  OWNER_NUMBER: process.env.OWNER_NUMBER || '58 426-3423036',
   CHANNEL_LINK: 'https://whatsapp.com/channel/0029VbB3YxTDJ6H15SKoBv3S',
-  BOT_NAME: 'ғʀᴇᴇ-ᴍɪɴɪ',
+  BOT_NAME: 'SALU BOT',
   BOT_VERSION: '1.0.2',
-  OWNER_NAME: 'ᴍʀ xᴅᴋɪɴɢ',
+  OWNER_NAME: 'SUHAIL'',
   IMAGE_PATH: 'https://files.catbox.moe/f9gwsx.jpg',
   BOT_FOOTER: '> ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍᴀʟᴠɪɴ ᴛᴇᴄʜ',
   BUTTON_IMAGES: { ALIVE: 'https://files.catbox.moe/f9gwsx.jpg' }
@@ -2181,5 +2181,6 @@ initMongo().catch(err => console.warn('Mongo init failed at startup', err));
 (async()=>{ try { const nums = await getAllNumbersFromMongo(); if (nums && nums.length) { for (const n of nums) { if (!activeSockets.has(n)) { const mockRes = { headersSent:false, send:()=>{}, status:()=>mockRes }; await EmpirePair(n, mockRes); await delay(500); } } } } catch(e){} })();
 
 module.exports = router;
+
 
 
