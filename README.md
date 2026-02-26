@@ -1,7 +1,7 @@
 <!-- ₹REE WA BOT | Modern Profile README  -->
 
 <p align="center">
-  <img src="https://files.catbox.moe/f9gwsx.jpg" alt="FREE SC WA BOT Banner" width="100%">
+  <img src="https://files.catbox.moe/5ognk5.png" alt="FREE SC WA BOT Banner" width="100%">
 </p>
 
 <h1 align="center">Hi 👋, I'm Malvin King</h1>
