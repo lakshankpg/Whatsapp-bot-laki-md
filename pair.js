@@ -1989,39 +1989,120 @@ ${autoList || '│ ⚠️ No auto replies set'}
                     break;
                 }
                 
-                case 'tiktok':
-                {
-                    const url = args[0];
-                    if (!url || !url.includes("tiktok.com")) {
-                        await socket.sendMessage(sender, { text: `Usage: ${config.PREFIX}tiktok [tiktok url]` }, { quoted: msg });
-                        break;
-                    }
-                    
-                    try {
-                        await socket.sendMessage(sender, { react: { text: "🎵", key: msg.key } });
-                        await socket.sendMessage(sender, { text: '*📥 Downloading TikTok...*' }, { quoted: fakevcard });
-                        
-                        const apiUrl = `https://delirius-apiofc.vercel.app/download/tiktok?url=${encodeURIComponent(url)}`;
-                        const { data } = await axios.get(apiUrl);
-                        
-                        if (!data.status || !data.data) {
-                            await socket.sendMessage(sender, { text: '❌ Failed to fetch TikTok.' }, { quoted: fakevcard });
-                            break;
-                        }
-                        
-                        const videoUrl = data.data.meta.media.find(v => v.type === "video").org;
-                        
-                        await socket.sendMessage(sender, { 
-                            video: { url: videoUrl }, 
-                            caption: `✅ *TikTok Download*\n👤 ${data.data.author.nickname}\n👍 ${data.data.like} likes\n💬 ${data.data.comment} comments\n🔗 ${data.data.share} shares` 
-                        }, { quoted: fakevcard });
-                        
-                    } catch (err) {
-                        console.error("tiktok error:", err);
-                        await socket.sendMessage(sender, { text: '❌ Failed to download TikTok.' }, { quoted: fakevcard });
-                    }
-                    break;
+                case 'ts': {
+    const axios = require('axios');
+
+    const q = msg.message?.conversation ||
+              msg.message?.extendedTextMessage?.text ||
+              msg.message?.imageMessage?.caption ||
+              msg.message?.videoMessage?.caption || '';
+
+    const query = q.replace(/^[.\/!]ts\s*/i, '').trim();
+
+    if (!query) {
+        return await socket.sendMessage(sender, {
+            text: '[❗] TikTok එකේ මොකද්ද බලන්න ඕනෙ කියපං! 🔍'
+        }, { quoted: msg });
+    }
+
+    async function tiktokSearch(query) {
+        try {
+            const searchParams = new URLSearchParams({
+                keywords: query,
+                count: '10',
+                cursor: '0',
+                HD: '1'
+            });
+
+            const response = await axios.post("https://tikwm.com/api/feed/search", searchParams, {
+                headers: {
+                    'Content-Type': "application/x-www-form-urlencoded; charset=UTF-8",
+                    'Cookie': "current_language=en",
+                    'User-Agent': "Mozilla/5.0"
                 }
+            });
+
+            const videos = response.data?.data?.videos;
+            if (!videos || videos.length === 0) {
+                return { status: false, result: "No videos found." };
+            }
+
+            return {
+                status: true,
+                result: videos.map(video => ({
+                    description: video.title || "No description",
+                    videoUrl: video.play || ""
+                }))
+            };
+        } catch (err) {
+            return { status: false, result: err.message };
+        }
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    try {
+        const searchResults = await tiktokSearch(query);
+        if (!searchResults.status) throw new Error(searchResults.result);
+
+        const results = searchResults.result;
+        shuffleArray(results);
+
+        const selected = results.slice(0, 6);
+
+        const cards = await Promise.all(selected.map(async (vid) => {
+            const videoBuffer = await axios.get(vid.videoUrl, { responseType: "arraybuffer" });
+
+            const media = await prepareWAMessageMedia({ video: videoBuffer.data }, {
+                upload: socket.waUploadToServer
+            });
+
+            return {
+                body: proto.Message.InteractiveMessage.Body.fromObject({ text: '' }),
+                footer: proto.Message.InteractiveMessage.Footer.fromObject({ text: "laki md mini 𝐁𝙾𝚃" }),
+                header: proto.Message.InteractiveMessage.Header.fromObject({
+                    title: vid.description,
+                    hasMediaAttachment: true,
+                    videoMessage: media.videoMessage // 🎥 Real video preview
+                }),
+                nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.fromObject({
+                    buttons: [] // ❌ No buttons
+                })
+            };
+        }));
+
+        const msgContent = generateWAMessageFromContent(sender, {
+            viewOnceMessage: {
+                message: {
+                    messageContextInfo: {
+                        deviceListMetadata: {},
+                        deviceListMetadataVersion: 2
+                    },
+                    interactiveMessage: proto.Message.InteractiveMessage.fromObject({
+                        body: { text: `🔎 *TikTok Search:* ${query}` },
+                        footer: { text: "> 𝐏𝙾𝚆𝙴𝚁𝙳 𝐁𝚈 lakshan-𝐌𝙳" },
+                        header: { hasMediaAttachment: false },
+                        carouselMessage: { cards }
+                    })
+                }
+            }
+        }, { quoted: msg });
+
+        await socket.relayMessage(sender, msgContent.message, { messageId: msgContent.key.id });
+
+    } catch (err) {
+        await socket.sendMessage(sender, {
+            text: `❌ Error: ${err.message}`
+        }, { quoted: msg });
+    }
+
+    break;
+            }
                 
                 case 'mediafire':
                 {
